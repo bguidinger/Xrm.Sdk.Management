@@ -10,55 +10,66 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class ManagementClient
+    public interface IManagementClient
     {
-        private string _clientId;
+        Task<TResponse> Execute<TResponse>(Request request) where TResponse : class;
+    }
+
+    public class ManagementClient : IManagementClient, IDisposable
+    {
         private readonly HttpClient _client = new HttpClient();
-        private AuthenticationContext _authContext;
-        private AuthenticationResult _authResult;
 
-        public ManagementClient(string serviceUrl)
+        public ManagementClient(Location location, NetworkCredential credential)
         {
-            _client.BaseAddress = new Uri(serviceUrl);
+            var serviceUrl = GetServiceUrl(location);
+            var handler = new OAuthHandler(serviceUrl, new HttpClientHandler());
+            handler.Authenticate(credential);
+            _client = new HttpClient(handler, true)
+            {
+                BaseAddress = new Uri(serviceUrl)
+            };
+        }
+        public ManagementClient(Location location, ClientCredential credential)
+        {
+            var serviceUrl = GetServiceUrl(location);
+            var handler = new OAuthHandler(serviceUrl, new HttpClientHandler());
+            handler.Authenticate(credential);
+            _client = new HttpClient(handler, true)
+            {
+                BaseAddress = new Uri(serviceUrl)
+            };
         }
 
-        public void Authenticate(NetworkCredential credential)
+        private string GetServiceUrl(Location location)
         {
-            var resourceUri = new Uri(_client.BaseAddress + "/api/aad/challenge");
-            var authParams = AuthenticationParameters.CreateFromResourceUrlAsync(resourceUri).Result;
-
-            _authContext = new AuthenticationContext(authParams.Authority);
-            _clientId = "51f81489-12ee-4a9e-aaae-a2591f45987d";
-            _authResult = _authContext.AcquireTokenAsync(authParams.Resource, _clientId, new UserCredential(credential.UserName, credential.SecurePassword)).Result;
+            var number = location == 0 ? string.Empty : location.ToString();
+            return $"https://admin.services.crm{number}.dynamics.com";
         }
 
-        public void Authenticate(ClientCredential credential)
-        {
-            var resourceUri = new Uri(_client.BaseAddress + "/api/aad/challenge");
-            var authParams = AuthenticationParameters.CreateFromResourceUrlAsync(resourceUri).Result;
-
-            _authContext = new AuthenticationContext(authParams.Authority);
-            _clientId = credential.ClientId;
-            _authResult = _authContext.AcquireTokenAsync(authParams.Resource, credential).Result;
-        }
+        public string Version { get; set; } = "1.1";
+        public string Language { get; set; } = "en-US";
 
         public async Task<TResponse> Execute<TResponse>(Request request) where TResponse : class
         {
-            if (_authResult == null || _authResult.ExpiresOn < DateTimeOffset.UtcNow)
+            using (var message = GetMessage(request))
             {
-                _authResult = await _authContext.AcquireTokenByRefreshTokenAsync(_authResult.RefreshToken, _clientId);
+                return await GetResponse<TResponse>(GetMessage(request));
             }
-            return await GetResponse<TResponse>(GetMessage(request));
+            
         }
 
         private HttpRequestMessage GetMessage(Request request)
         {
-            var message = new HttpRequestMessage(request.Method, "/api/v1.1" + request.RequestUri);
-            message.Headers.Authorization = new AuthenticationHeaderValue(_authResult.AccessTokenType, _authResult.AccessToken);
-            message.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue("en-US"));
+            var message = new HttpRequestMessage(request.Method, $"/api/v{Version}{request.RequestUri}");
+            message.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue(Language));
             if (request.Method != HttpMethod.Get)
             {
-                var json = JsonConvert.SerializeObject(request, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                var settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.None,
+                    NullValueHandling = NullValueHandling.Ignore
+                };
+                var json = JsonConvert.SerializeObject(request, settings);
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
             return message;
@@ -85,6 +96,22 @@
                     }
                 }
             }
+        }
+
+        private bool disposed = false;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed) return;
+            if (disposing)
+            {
+                _client.Dispose();
+            }
+            disposed = true;
         }
     }
 }

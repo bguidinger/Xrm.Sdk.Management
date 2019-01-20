@@ -58,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Location.cs" />
     <Compile Include="ManagementExtensions.cs" />
     <Compile Include="ManagementClient.cs" />
     <Compile Include="Exceptions\OperationException.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="Requests\Operation Status\GetOperationStatus.cs" />
     <Compile Include="Requests\Service Versions\GetServiceVersions.cs" />
     <Compile Include="Requests\Instances\GetInstances.cs" />
+    <Compile Include="OAuthHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="package.nuspec" />
