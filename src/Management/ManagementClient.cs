@@ -12,7 +12,7 @@
 
     public interface IManagementClient
     {
-        Task<TResponse> Execute<TResponse>(Request request) where TResponse : class;
+        Task<TResponse> Execute<TResponse>(Message request) where TResponse : class;
     }
 
     public class ManagementClient : IManagementClient, IDisposable
@@ -39,29 +39,34 @@
         public string Version { get; set; } = "1.1";
         public string Language { get; set; } = "en-US";
 
-        public async Task<TResponse> Execute<TResponse>(Request request) where TResponse : class
+        public async Task<TResponse> Execute<TResponse>(Message message) where TResponse : class
         {
-            using (var message = GetMessage(request))
+            using (var request = GetRequest(message))
             {
-                return await GetResponse<TResponse>(GetMessage(request));
+                return await GetResponse<TResponse>(request);
             }
         }
 
-        private HttpRequestMessage GetMessage(Request request)
+        private HttpRequestMessage GetRequest(Message message)
         {
-            var message = new HttpRequestMessage(request.Method, $"/api/v{Version}{request.RequestUri}");
-            message.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue(Language));
-            if (request.Method != HttpMethod.Get)
+            if (message.Validation.IsValid == false)
+            {
+                throw new ValidationException(message.Validation);
+            }
+
+            var request = new HttpRequestMessage(message.Method, $"/api/v{Version}{message.RequestUri}");
+            request.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue(Language));
+            if (message.Method != HttpMethod.Get)
             {
                 var settings = new JsonSerializerSettings
                 {
                     Formatting = Formatting.None,
                     NullValueHandling = NullValueHandling.Ignore
                 };
-                var json = JsonConvert.SerializeObject(request, settings);
-                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                var json = JsonConvert.SerializeObject(message, settings);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
-            return message;
+            return request;
         }
 
         private async Task<TResponse> GetResponse<TResponse>(HttpRequestMessage message) where TResponse : class
