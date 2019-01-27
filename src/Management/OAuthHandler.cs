@@ -13,7 +13,6 @@
         private readonly Uri _resourceUri;
         private readonly UserCredential _credential;
         private AuthenticationContext _authContext;
-        private AuthenticationParameters _authParams;
         private AuthenticationResult _authResult;
 
         public OAuthHandler(Uri resourceUri, UserCredential credential) : base(new HttpClientHandler())
@@ -26,9 +25,9 @@
         {
             if (_authResult == null)
             {
-                _authParams = AuthenticationParameters.CreateFromResourceUrlAsync(_resourceUri).Result;
-                _authContext = new AuthenticationContext(_authParams.Authority);
-                _authResult = _authContext.AcquireToken(_authParams.Resource, _clientId, _credential);
+                var authParams = await AuthenticationParameters.CreateFromResourceUrlAsync(_resourceUri);
+                _authContext = new AuthenticationContext(authParams.Authority);
+                _authResult = _authContext.AcquireToken(authParams.Resource, _clientId, _credential);
             }
 
             if (_authResult.ExpiresOn < DateTimeOffset.UtcNow)
