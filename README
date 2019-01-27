@@ -1,0 +1,12 @@
+# Dynamics 365 Online Management API
+
+## Overview
+This project provides a wrapper around the [Dynamics 365 Online Management API](https://docs.microsoft.com/en-us/dynamics365/customer-engagement/developer/online-management-api).
+
+## Samples
+
+### Backup Instance
+
+### Provision Instance
+
+### Post Notification

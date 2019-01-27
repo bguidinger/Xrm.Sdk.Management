@@ -1,14 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>BGuidinger.Xrm.Sdk.Management</id>
     <version>1.0.0.0</version>
     <description>Wrapper for Dynamics 365 Online Management API</description>
+    <summary>This package contains a wrapper for the Dynamics 365 Online Management API.</summary>
     <authors>bguidinger</authors>
     <owners>bguidinger</owners>
     <copyright>© Bob Guidinger. All rights reserved.</copyright>
     <language>en-US</language>
     <tags>Dynamics CRM 365 Dynamics365 D365 Management API</tags>
+    <projectUrl>https://github.com/bguidinger/Xrm.Sdk.Management</projectUrl>
+    <license type="expression">MIT</license>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <releaseNotes>1.0.0: Initial release</releaseNotes>
     <dependencies>
       <group targetFramework=".NETFramework4.5">
         <dependency id="Microsoft.IdentityModel.Clients.ActiveDirectory" version="[2.22.302111727, 3.0.0)" />
