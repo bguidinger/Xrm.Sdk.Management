@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>BGuidinger.Xrm.Sdk.Management</id>
+    <version>1.0.0.0</version>
+    <description>Wrapper for Dynamics 365 Online Management API</description>
+    <authors>bguidinger</authors>
+    <owners>bguidinger</owners>
+    <copyright>© Bob Guidinger. All rights reserved.</copyright>
+    <language>en-US</language>
+    <tags>Dynamics CRM 365 Dynamics365 D365 Management API</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="Microsoft.IdentityModel.Clients.ActiveDirectory" version="[2.22.302111727, 3.0.0)" />
+        <dependency id="Newtonsoft.Json" version="6.0.8" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
