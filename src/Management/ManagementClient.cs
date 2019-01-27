@@ -19,21 +19,11 @@
     {
         private readonly HttpClient _client = new HttpClient();
 
-        public ManagementClient(Location location, NetworkCredential credential)
+        public ManagementClient(Location location, UserCredential credential)
         {
             var serviceUrl = GetServiceUrl(location);
-            var handler = new OAuthHandler(serviceUrl, new HttpClientHandler());
-            handler.Authenticate(credential);
-            _client = new HttpClient(handler, true)
-            {
-                BaseAddress = new Uri(serviceUrl)
-            };
-        }
-        public ManagementClient(Location location, ClientCredential credential)
-        {
-            var serviceUrl = GetServiceUrl(location);
-            var handler = new OAuthHandler(serviceUrl, new HttpClientHandler());
-            handler.Authenticate(credential);
+            var resourceUri = new Uri(serviceUrl + "/api/aad/challenge");
+            var handler = new OAuthHandler(resourceUri, credential);
             _client = new HttpClient(handler, true)
             {
                 BaseAddress = new Uri(serviceUrl)
@@ -55,7 +45,6 @@
             {
                 return await GetResponse<TResponse>(GetMessage(request));
             }
-            
         }
 
         private HttpRequestMessage GetMessage(Request request)

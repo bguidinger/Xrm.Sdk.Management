@@ -2,7 +2,6 @@
 {
     using Microsoft.IdentityModel.Clients.ActiveDirectory;
     using System;
-    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Threading;
@@ -10,36 +9,26 @@
 
     internal class OAuthHandler : DelegatingHandler
     {
-        private string _clientId;
+        private readonly string _clientId = "51f81489-12ee-4a9e-aaae-a2591f45987d";
+        private readonly Uri _resourceUri;
+        private readonly UserCredential _credential;
         private AuthenticationContext _authContext;
         private AuthenticationParameters _authParams;
         private AuthenticationResult _authResult;
 
-        public OAuthHandler(string serviceUrl, HttpMessageHandler innerHandler) : base(innerHandler)
+        public OAuthHandler(Uri resourceUri, UserCredential credential) : base(new HttpClientHandler())
         {
-            var resourceUri = new Uri(serviceUrl + "/api/aad/challenge");
-            _authParams = AuthenticationParameters.CreateFromResourceUrlAsync(resourceUri).Result;
-            _authContext = new AuthenticationContext(_authParams.Authority);
-        }
-
-        public void Authenticate(NetworkCredential credential)
-        {
-            _clientId = "51f81489-12ee-4a9e-aaae-a2591f45987d";
-            var userCredential = new UserCredential(credential.UserName, credential.SecurePassword);
-            _authResult = _authContext.AcquireTokenAsync(_authParams.Resource, _clientId, userCredential).Result;
-        }
-
-        public void Authenticate(ClientCredential credential)
-        {
-            _clientId = credential.ClientId;
-            _authResult = _authContext.AcquireTokenAsync(_authParams.Resource, credential).Result;
+            _resourceUri = resourceUri;
+            _credential = credential;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (_authResult == null)
             {
-                throw new Exception("Not authenticated.");
+                _authParams = AuthenticationParameters.CreateFromResourceUrlAsync(_resourceUri).Result;
+                _authContext = new AuthenticationContext(_authParams.Authority);
+                _authResult = _authContext.AcquireToken(_authParams.Resource, _clientId, _credential);
             }
 
             if (_authResult.ExpiresOn < DateTimeOffset.UtcNow)
