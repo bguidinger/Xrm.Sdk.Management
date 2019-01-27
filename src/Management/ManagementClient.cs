@@ -58,13 +58,22 @@
             request.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue(Language));
             if (message.Method != HttpMethod.Get)
             {
-                var settings = new JsonSerializerSettings
+                using (var stream = new MemoryStream())
+                using (var writer = new StreamWriter(stream))
+                using (var json = new JsonTextWriter(writer))
                 {
-                    Formatting = Formatting.None,
-                    NullValueHandling = NullValueHandling.Ignore
-                };
-                var json = JsonConvert.SerializeObject(message, settings);
-                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var serializer = new JsonSerializer
+                    {
+                        Formatting = Formatting.None,
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+                    serializer.Serialize(json, message);
+
+                    var content = new StreamContent(stream);
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                    request.Content = content;
+                }
             }
             return request;
         }
